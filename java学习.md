@@ -6,6 +6,18 @@
 
 2. SRC目录下为java源代码，out目录默认为Java编译输出目录，*.java和public类名相同，一个\*.java文件下可以有多个class，但只有一个public类型class
 
+## 变量类型
+
+### 返回一个对象地址
+
+传入一个对象实例
+
+```java
+Log log = LogFactory.getLog(Commons.class);
+```
+
+上述写法不是创建一个对象，是对Log 类型的引用变量进行赋值，值的类型是对象地址，等号右边是调用的函数，函数有返回类型。log就相当于右边函数创造的对象。
+
 ## 局部变量
 
 1. 局部变量，方法内的变量；
@@ -16,7 +28,7 @@
 
 1. 构造方法用来初始化实例，方法名与类名相同
 
-2. 构造方法参数无限制，构造方法没有返回值（也没有void）
+2. 构造方法参数无限制，**构造方法没有返回值**（也没有void）
 
    ```java
    class Person{
@@ -234,3 +246,246 @@
 
 - 分隔符拼接数组
 
+## 日志
+
+### IDEA引入第三方库（jar）
+
+项目结构---模块---依赖---+jar
+
+### JDK logging
+
+java 标准库提供的日志
+
+```java
+import java.util.logging.Logger;
+```
+
+### Commons Logging
+
+第三方日志库，由Apache创建的日志模块，可**挂接不同的日志系统**，并通过配置文件指定挂接的日志系统，**相当作为日志接口来使用，它不是日志实现**；默认自动搜索Log4j（另一个流行的日志系统），如果没找到，使用JDK Logging
+
+1. 使用Commons Logging时，如果在静态方法中引用Log，通常直接定义一个静态变量
+
+   ```java
+   // 在静态方法中引用Log:
+   public class Main {
+       static final Log log = LogFactory.getLog(Main.class);
+   
+       static void foo() {
+           log.info("foo");
+       }
+   }
+   ```
+
+2. 在实例方法中引用Log，通常定义一个实例变量
+
+   ```java
+   // 在实例方法中引用Log:
+   public class Person {
+       protected final Log log = LogFactory.getLog(getClass());
+   
+       void foo() {
+           log.info("foo");
+       }
+   }
+   ```
+
+3. 传参使用getClass() ，好处是子类可以从父类继承log实例
+
+### Log4j
+
+1. 日志的实现，Log4j是一种流行的日志框架
+2. Log4j可自动把一条日志输出到不同目的地
+   - console：输出到屏幕
+   - file：输出到文件
+   - socket：通过网络输出到远程计算机
+   - jdbc：输出到数据库
+3. 输出日志过程中，通过Filter来过滤哪些log需要被输出，哪些log不需要被输出，通过Layout来格式化日志信息
+4. Log4j实际使用是通过配置文件来配置，即 .xml 文件
+
+### LSF4J和Logback
+
+> Commons Logging和Log4j，它们一个负责充当日志API，一个负责实现日志底层
+
+SLF4J 类似 Commons Logging，也是一个日志接口，而Logback类似Log4j，是一个日志实现
+
+### LSF4J日志打印（常用）
+
+打印日志常见代码
+
+```java
+//Commons Logging
+int score = 99;
+p.setScore(score);
+log.info("Set score " + score + " for Person " + p.getName() + " ok.");
+```
+
+
+
+```java
+//slf4j
+int score = 99;
+p.setScore(score);
+logger.info("Set score {} for Person {} ok.", score, p.getName());
+```
+
+导入的包
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+```
+
+同之处就是Log变成了Logger，LogFactory变成了LoggerFactory。使用SLF4J和Logback和使用Commons Logging加Log4j是类似的。
+
+## 反射
+
+- Java的反射是指程序在运行期可以拿到一个对象的所有信息。
+
+- `class`是由JVM在执行过程中动态加载的。JVM在第一次读取到一种`class`类型时，将其加载进内存。
+
+  每加载一种`class`，JVM就为其创建一个`Class`类型的实例，并关联起来。注意：这里的`Class`类型是一个名叫`Class`的`class`
+
+  ```java
+  public final class Class {
+      private Class() {}
+  }
+  ```
+
+- 以`String`类为例，当JVM加载`String`类时，它首先读取`String.class`文件到内存，然后，为`String`类创建一个`Class`实例并关联起来
+
+- Class实例是由JVM内部创建的，Class类的构造方法是private，因此只能由JVM创建
+
+- JVM为每个加载的`class`创建了对应的`Class`实例，并在实例中保存了该`class`的所有信息，包括类名、包名、父类、实现的接口、所有方法、字段等，因此，如果获取了某个`Class`实例，我们就可以通过这个`Class`实例获取到该实例对应的`class`的所有信息（Class实例封装了许多方法来完成获取）
+
+- **通过`Class`实例获取`class`信息的方法称为反射（Reflection）**
+
+## 注解
+
+java程序的一种特殊注释——注解
+
+1. 注解是放在java源码的类、方法、字段、参数前的一种特殊注释
+2. 注解的作用
+   - 第一类是由编译器使用的注解
+     - `@Override`：让编译器检查该方法是否正确地实现了覆写；
+     - `@SuppressWarnings`：告诉编译器忽略此处代码产生的警告。
+     - 这类注解不会被编译进.class文件，编译后被扔掉
+   - 第二类是由工具处理.class 文件使用的注解，比如有些工具会在加载class的时候，对class做动态修改，实现一些特殊的功能。这类注解会被编译进入`.class`文件，但加载结束后并不会存在于内存中。这类注解只被一些底层库使用，一般我们不必自己处理。
+   - 第**三类是程序运行期间能够读取的注解，它们在加载后一直存在JVM中，这是最常用的注解**，例如，一个配置了`@PostConstruct`的方法会在调用构造方法后自动被调用（这是Java代码读取该注解实现的功能，JVM并不会识别该注解）。
+
+### 注解的定义
+
+Java语言使用`@interface`语法来定义注解（`Annotation`），它的格式如下：
+
+```java
+public @interface Report {
+    int type() default 0;
+    String level() default "info";
+    String value() default "";
+}
+```
+
+注解的参数类似无参数方法，可以用`default`设定一个默认值（强烈推荐）。最常用的参数应当命名为`value`。
+
+**元注解**
+
+有一些注解可以修饰其他注解，这些注解就称为元注解（meta annotation）。
+
+**常用元注解**
+
+- @Target，最常用的元注解是`@Target`。使用`@Target`可以定义`Annotation`能够被应用于源码的哪些位置
+- @Retention，元注解`@Retention`定义了`Annotation`的生命周期
+- @Inherited，使用`@Inherited`定义子类是否可继承父类定义的`Annotation`
+
+**注解定义**
+
+1. 使用@interface定义注解
+2. 添加参数、默认值
+3. 用元注解配置注释
+
+### 注解处理
+
+ava的注解本身对代码逻辑没有任何影响。根据`@Retention`的配置。
+
+### 注解使用
+
+注解如何使用，完全由程序自己决定。例如，JUnit是一个测试框架，它会自动运行所有标记为`@Test`的方法。
+
+## 泛型
+
+针对数据类型做检查，代码模板，实现编写一次万能匹配，通过编译器保证了类型安全。
+
+编写举例：
+
+例如String，来编写类
+
+```java
+public class Pair {
+    private String first;
+    private String last;
+    public Pair(String first, String last) {
+        this.first = first;
+        this.last = last;
+    }
+    public String getFirst() {
+        return first;
+    }
+    public String getLast() {
+        return last;
+    }
+}
+```
+
+然后标记所有特定类型，即String；
+
+最后，把特定类型String替换为T，并声明<T>
+
+```java 
+public class Pair<T> {
+    private T first;
+    private T last;
+    public Pair(T first, T last) {
+        this.first = first;
+        this.last = last;
+    }
+    public T getFirst() {
+        return first;
+    }
+    public T getLast() {
+        return last;
+    }
+}
+```
+
+**应用**
+
+实现编写一次模板，可以创建任意类型的ArrayList
+
+```java
+public class ArrayList<T> {
+    private T[] array;
+    private int size;
+    public void add(T e) {...}
+    public void remove(int index) {...}
+    public T get(int index) {...}
+}
+```
+
+```java
+// 创建可以存储String的ArrayList:
+ArrayList<String> strList = new ArrayList<String>();
+// 创建可以存储Float的ArrayList:
+ArrayList<Float> floatList = new ArrayList<Float>();
+// 创建可以存储Person的ArrayList:
+ArrayList<Person> personList = new ArrayList<Person>();
+```
+
+**注意**
+
+- 泛型的好处是使用时不必对类型进行强制转换，它通过编译器对类型进行检查；
+
+- 注意泛型的继承关系：可以把`ArrayList<Integer>`向上转型为`List<Integer>`（`T`不能变！），但不能把`ArrayList<Integer>`向上转型为`ArrayList<Number>`（`T`不能变成父类）。
+
+## 异常
+
+异常如果出现，程序就会自动中断，后续语句都不再执行，捕获异常是为了处理异常并且继续执行后续的程序。
